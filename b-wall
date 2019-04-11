@@ -1,0 +1,202 @@
+#!/bin/bash
+
+success(){
+
+    GREEN="\e[0;32m"
+    NC="\e[0m"
+
+    echo -e "${GREEN}SUCCESS${NC}"
+
+}
+
+fail(){
+
+    RED="\e[0;31m"
+    NC="\e[0m"
+
+    echo -e "${RED}FAILED${NC}"
+
+}
+
+help(){
+
+    echo
+    echo "a simple script to set iptables firewall for BlackArch"
+    echo
+    echo "usage: b-wall <arg>"
+    echo
+    echo "arguments:"
+    echo "      -s, --simple        simple stateful firewall"
+    echo "      -e, --empty         empty iptables"
+    echo "      -d, --default       load default rules"
+    echo "      -h, --help          display help"
+    echo
+    echo "NOTE: the script does not save the current rules"
+    echo
+
+}
+
+simple(){
+
+    RULES=("-P INPUT DROP" "-P FORWARD DROP" "-P OUTPUT ACCEPT"
+            "-F" "-t nat -F" "-X"
+            "-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT"
+            "-A INPUT -i lo -j ACCEPT"
+            "-A INPUT -p icmp -j REJECT"
+            "-A INPUT -p tcp -j REJECT --reject-with tcp-reset"
+            "-A INPUT -p udp -j REJECT"
+            "-A INPUT -j REJECT")
+
+    echo -n "setting iptables... "
+
+    for RULE in "${RULES[@]}"
+    do
+        /usr/bin/iptables ${RULE} &> /dev/null
+
+        if [[ $? -ne 0 ]]
+        then
+            fail
+            echo "ERROR: problematic rule: ${RULE}"
+            exit 1
+        else
+            sleep 0.1
+        fi
+    done
+
+    success
+
+    echo -n "setting ip6tables... "
+
+    for RULE in "${RULES[@]}"
+    do
+        /usr/bin/ip6tables ${RULE} &> /dev/null
+
+        if [[ $? -ne 0 ]]
+        then
+            fail
+            echo "ERROR: problematic rule: ${RULE}"
+            exit 1
+        else
+            sleep 0.1
+        fi
+    done
+
+    success
+
+}
+
+empty(){
+
+    RULES=("-P INPUT ACCEPT" "-P FORWARD ACCEPT" "-P OUTPUT ACCEPT"
+            "-F" "-t nat -F" "-X")
+
+    echo -n "flushing iptables... "
+
+    for RULE in "${RULES[@]}"
+    do
+        /usr/bin/iptables $RULE &> /dev/null
+
+        if [[ $? -ne 0 ]]
+        then
+            fail
+            echo "ERROR: problematic rule: ${RULE}"
+            exit 1
+        else
+            sleep 0.1
+        fi
+    done
+
+    success
+
+    echo -n "flushing ip6tables... "
+
+    for RULE in "${RULES[@]}"
+    do
+        /usr/bin/ip6tables $RULE &> /dev/null
+
+        if [[ $? -ne 0 ]]
+        then
+            fail
+            echo "ERROR: problematic rule: ${RULE}"
+            exit 1
+        else
+            sleep 0.1
+        fi
+    done
+
+    success
+
+}
+
+default(){
+
+    empty
+
+    echo -n "checking iptables default rules... "
+
+    if [ -r "/etc/iptables/iptables.rules" ]
+    then
+            success
+
+            echo -n "restoring default rules... "
+
+            /usr/bin/iptables-restore /etc/iptables/iptables.rules &> /dev/null
+
+            if [[ $? -eq 0 ]]
+            then
+                success
+            else
+                fail
+            fi
+    else
+        fail
+        echo "ERROR: file missing: '/etc/iptables/iptables.rules'"
+    fi
+
+    echo -n "checking ip6tables default rules... "
+
+    if [ -r "/etc/iptables/ip6tables.rules" ]
+    then
+            success
+
+            echo -n "restoring default rules... "
+
+            /usr/bin/ip6tables-restore /etc/iptables/ip6tables.rules &> /dev/null
+
+            if [[ $? -eq 0 ]]
+            then
+                success
+            else
+                fail
+            fi
+    else
+        fail
+        echo "ERROR: file missing: '/etc/iptables/ip6tables.rules'"
+    fi
+
+}
+
+if [[ $EUID -ne 0 ]]
+then
+    echo "RUN AS ROOT!"
+    exit 1
+fi
+
+case $1 in
+    "-s" | "--simple")
+        simple
+        ;;
+    "-e" | "--empty")
+        empty
+        ;;
+    "-d" | "--default")
+        default
+        ;;
+    "-h" | "--help")
+        help
+        ;;
+    *)
+        echo "ERROR: invalid argument: '$1'"
+        echo "use '-h' or '--help' for help"
+        exit 1
+esac

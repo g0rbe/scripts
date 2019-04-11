@@ -1,0 +1,70 @@
+#!/bin/bash
+
+me() {
+    myip=$(curl -s https://api.ipify.org)
+    mydata=$(curl -s http://ipinfo.io/"${myip}")
+
+    echo "IP: $(echo "${mydata}" | jq -r '.ip')"
+    echo "hostname: $(echo "${mydata}" | jq -r '.hostname')"
+    echo "city: $(echo "${mydata}" | jq -r '.city')"
+    echo "region: $(echo "${mydata}" | jq -r '.region')"
+    echo "country: $(echo "${mydata}" | jq -r '.country')"
+    echo "location: $(echo "${mydata}" | jq -r '.loc')"
+    echo "postal: $(echo "${mydata}" | jq -r '.postal')"
+    echo "ISP: $(echo "${mydata}" | jq -r '.org')"
+}
+
+ip(){
+
+    if [[ -z $1 ]]
+    then
+        echo "ERROR: IP is missing"
+        exit 1
+    else
+        remoteip=$1
+    fi
+
+    remotedata=$(curl -s http://ipinfo.io/"${remoteip}")
+
+
+    echo "IP: $(echo "${remotedata}" | jq -r '.ip')"
+    echo "hostname: $(echo "${remotedata}" | jq -r '.hostname')"
+    echo "city: $(echo "${remotedata}" | jq -r '.city')"
+    echo "region: $(echo "${remotedata}" | jq -r '.region')"
+    echo "country: $(echo "${remotedata}" | jq -r '.country')"
+    echo "location: $(echo "${remotedata}" | jq -r '.loc')"
+    echo "postal: $(echo "${remotedata}" | jq -r '.postal')"
+    echo "ISP: $(echo "${remotedata}" | jq -r '.org')"
+
+}
+
+help(){
+
+    echo
+    echo "simple IP address lookup script"
+    echo
+    echo "usage: b-ip <arg>"
+    echo
+    echo "arguments:"
+    echo "      -m, --me        information about my IP"
+    echo "      -i, --ip <IP>   information about the given IP"
+    echo "      -h, --help      display this menu"
+    echo
+}
+
+case $1 in
+    "-m" | "--me")
+        me
+        ;;
+    "-i" | "--ip")
+        ip "$2"
+        ;;
+    "-h" | "--help")
+        help
+        ;;
+    *)
+        echo "ERROR: invalid argument: '$1'"
+        echo "use '-h' or '--help' for help"
+        exit 1
+        ;;
+esac
