@@ -60,7 +60,7 @@ visible(){
     SALT="rounds=${ROUNDS}\$${SERVICE}"
     PASS="${PASSWORD}${USERNAME}"
 
-    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+    HASH=$(/usr/bin/openssl passwd -6 -salt "${SALT}" "${PASS}")
 
     PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
 
@@ -82,7 +82,7 @@ invisible(){
     SALT="rounds=${ROUNDS}\$${SERVICE}"
     PASS="${PASSWORD}${USERNAME}"
 
-    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+    HASH=$(/usr/bin/openssl passwd -6 -salt "${SALT}" "${PASS}")
 
     PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
 
@@ -102,7 +102,7 @@ def_visible(){
     SALT="rounds=${ROUNDS}\$${SERVICE}"
     PASS="${PASSWORD}${USERNAME}"
 
-    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+    HASH=$(/usr/bin/openssl passwd -6 -salt "${SALT}" "${PASS}")
 
     PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
 
@@ -118,7 +118,7 @@ encrypt(){
 
     echo -n "encrypting data... "
 
-    ERROR=$(gpg --batch --yes --passphrase "${PASSWORD}" --output "${OUTPUT}" --cipher-algo "AES256" --symmetric "${FILE}" 2>&1)
+    ERROR=$(/usr/bin/gpg --batch --yes --passphrase "${PASSWORD}" --output "${OUTPUT}" --cipher-algo "AES256" --symmetric "${FILE}" 2>&1)
 
     if [[ $? -eq 0 ]]
     then
@@ -141,7 +141,7 @@ decrypt(){
 
     echo -n "decrypting data... "
 
-    ERROR=$(gpg --output "${OUTPUT}" --batch --yes --passphrase "${PASSWORD}" --decrypt "${FILE}" 2>&1)
+    ERROR=$(/usr/bin/gpg --output "${OUTPUT}" --batch --yes --passphrase "${PASSWORD}" --decrypt "${FILE}" 2>&1)
 
     if [[ $? -eq 0 ]]
     then

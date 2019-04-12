@@ -45,19 +45,19 @@ install(){
         exit 1
     fi
 
-    SCRIPTS=($(ls b-*))
+    SCRIPTS=($(/usr/bin/ls b-*))
 
     for SCRIPT in "${SCRIPTS[@]}"
     do
 
         echo -n "installing '${SCRIPT}'... "
 
-        cp "$SCRIPT" "/usr/bin/"
+        /usr/bin/cp "$SCRIPT" "/usr/bin/"
 
         if [[ $? -eq 0 ]]
         then
 
-            chmod 555 "/usr/bin/${SCRIPT}"
+            /usr/bin/chmod 555 "/usr/bin/${SCRIPT}"
 
             if [[ $? -eq 0 ]]
             then
@@ -81,14 +81,14 @@ remove(){
         exit 1
     fi
 
-    SCRIPTS=($(ls b-*))
+    SCRIPTS=($(/usr/bin/ls b-*))
 
     for SCRIPT in "${SCRIPTS[@]}"
     do
 
         echo -n "removing '${SCRIPT}'... "
 
-        rm "/usr/bin/${SCRIPT}"
+        /usr/bin/rm "/usr/bin/${SCRIPT}"
 
         if [[ $? -eq 0 ]]
         then
@@ -107,7 +107,7 @@ update(){
         exit 1
     fi
 
-    git pull
+    /usr/bin/git pull
 
 }
 
