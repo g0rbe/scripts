@@ -1,0 +1,305 @@
+#!/bin/bash
+
+success(){
+
+    GREEN="\e[0;32m"
+    NC="\e[0m"
+
+    echo -e "${GREEN}SUCCESS${NC}"
+
+}
+
+yellow_echo(){
+
+    YELLOW="\e[0;33m"
+    NC="\e[0m"
+
+    echo -e "${YELLOW}${1}${NC}"
+
+}
+
+fail(){
+
+    RED="\e[0;31m"
+    NC="\e[0m"
+
+    echo -e "${RED}FAILED${NC}"
+
+}
+
+help(){
+
+    echo
+    echo "a simple encrypt/decrypt with GPG"
+    echo
+    echo "usage: b-aes <args>"
+    echo
+    echo "arguments:"
+    echo "      -e, --encrypt   <file>      encrypt <file>"
+    echo "      -d, --decrypt   <file>      decrypt <file>"
+    echo "      -v, --visible               visible input"
+    echo "      -i, --invisible             invisible input"
+    echo "      -o, --output    <name>      output file name"
+    echo "      -h, --help                  display help"
+    echo
+    echo "NOTE: default visibility: only password hidden"
+    echo
+
+
+}
+
+# $PASSWORD setted here, global by default
+#everything is visible
+visible(){
+
+    read -r -p "rounds: " ROUNDS
+    read -r -p "service: " SERVICE
+    read -r -p "username: " USERNAME
+    read -r -p "password: " PASSWORD
+
+    SALT="rounds=${ROUNDS}\$${SERVICE}"
+    PASS="${PASSWORD}${USERNAME}"
+
+    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+
+    PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
+
+}
+
+# or $PASSWORD setted here
+#everything is invisible
+invisible(){
+
+    read -r -s -p "rounds: " ROUNDS
+    echo
+    read -r -s -p "service: " SERVICE
+    echo
+    read -r -s -p "username: " USERNAME
+    echo
+    read -r -s -p "password: " PASSWORD
+    echo
+
+    SALT="rounds=${ROUNDS}\$${SERVICE}"
+    PASS="${PASSWORD}${USERNAME}"
+
+    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+
+    PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
+
+}
+
+# or $PASSWORD setted here
+# rounds, service, username visible
+#password hidden
+def_visible(){
+
+    read -r -p "rounds: " ROUNDS
+    read -r -p "service: " SERVICE
+    read -r -p "username: " USERNAME
+    read -r -s -p "password: " PASSWORD
+    echo
+
+    SALT="rounds=${ROUNDS}\$${SERVICE}"
+    PASS="${PASSWORD}${USERNAME}"
+
+    HASH=$(openssl passwd -6 -salt "${SALT}" "${PASS}")
+
+    PASSWORD="$(echo "${HASH}" | cut -d '$' -f 5)"
+
+}
+
+encrypt(){
+
+    if [ ${#PASSWORD} != 86 ]
+    then
+        echo "ERROR: something went wrong with the password!"
+        exit 1
+    fi
+
+    echo -n "encrypting data... "
+
+    ERROR=$(gpg --batch --yes --passphrase "${PASSWORD}" --output "${OUTPUT}" --cipher-algo "AES256" --symmetric "${FILE}" 2>&1)
+
+    if [[ $? -eq 0 ]]
+    then
+        success
+    else
+        failed
+        echo "ERROR: unknown"
+        echo "$ERROR"
+    fi
+
+}
+
+decrypt(){
+
+    if [ ${#PASSWORD} != 86 ]
+    then
+        echo "ERROR: something went wrong with the password!"
+        exit 1
+    fi
+
+    echo -n "decrypting data... "
+
+    ERROR=$(gpg --output "${OUTPUT}" --batch --yes --passphrase "${PASSWORD}" --decrypt "${FILE}" 2>&1)
+
+    if [[ $? -eq 0 ]]
+    then
+        success
+    else
+        fail
+
+        if [[ "$ERROR" == *"Bad session key"* ]]
+        then
+            echo "ERROR: wrong password!"
+        else
+            echo "ERROR: unknown"
+            echo "$ERROR"
+        fi
+    fi
+
+}
+
+if [[ $# -eq 0 ]]
+then
+    echo "use '-h' or '--help' for help"
+    exit 1
+fi
+
+# $OUTPUT comes from the argument, global by default
+while [[ $# -gt 0 ]]
+do
+    case $1 in
+        "-v" | "--visible")
+            VISIBLE=1
+            shift
+            ;;
+        "-i" | "--invisible")
+            INVISIBLE=1
+            shift
+            ;;
+        "-e" | "--encrypt")
+            ENCRYPT=1
+            FILE=$2
+            shift
+            shift
+            ;;
+        "-d" | "--decrypt")
+            DECRYPT=1
+            FILE=$2
+            shift
+            shift
+            ;;
+        "-o" | "--output")
+            OUTPUT_FLAG=1
+            OUTPUT=$2
+            shift
+            shift
+            ;;
+        "-h" | "--help")
+            help
+            exit
+            ;;
+        *)
+            echo "ERROR: invalid argument: '$1'"
+            echo "use '-h' or '--help' for help"
+            exit 1
+    esac
+done
+
+
+#check $OUTPUT
+#can't skip --output arg, can't be empty, can't contain dash
+if [ ! $OUTPUT_FLAG ]
+then
+    echo "ERROR: must specify output!"
+    exit 1
+elif [ -z "$OUTPUT" ]
+then
+    echo "ERROR: output missing!"
+    exit 1
+elif [ "$(echo "$OUTPUT" | grep -e '-')" ]
+then
+    echo "ERROR: illegal output name: '$OUTPUT'"
+    echo "output can't contain dash ('-')!"
+    exit 1
+fi
+
+
+#check $FILE
+echo -n "checking given file... "
+
+if [ $DECRYPT ]
+then
+    if [ -z "$FILE" ]
+    then
+        fail
+        echo "ERROR: file is missing!"
+        exit 1
+    elif [[ $(file "$FILE")  != *"AES256 cipher"* ]]
+    then
+        fail
+        echo "ERROR: file is not AES-256 encrypted!"
+        exit 1
+    elif [[ $(file "$FILE")  != *"GPG symmetrically encrypted data"* ]]
+    then
+        fail
+        echo "ERROR: file is not GPG encrypted!"
+        exit 1
+    else
+        success
+    fi
+elif [ $ENCRYPT ]
+then
+    if [ -z "$FILE" ]
+    then
+        fail
+        echo "ERROR: file is missing!"
+        exit 1
+    elif [[ $(file "$FILE")  == *"GPG symmetrically encrypted data (AES256 cipher)"* ]]
+    then
+        fail
+        echo "ERROR: file already encrypted!"
+        exit 1
+    else
+        success
+    fi
+fi
+
+echo -n "selected method: "
+
+if [ $VISIBLE ] && [ $ENCRYPT ]
+then
+    yellow_echo "VISIBLE + ENCRYPT"
+    visible
+    encrypt
+elif [ $VISIBLE ] && [ $DECRYPT ]
+then
+    yellow_echo "VISIBLE + DECRYPT"
+    visible
+    decrypt
+elif [ $INVISIBLE ] && [ $ENCRYPT ]
+then
+    yellow_echo "INVISIBLE + ENCRYPT"
+    invisible
+    encrypt
+elif [ $INVISIBLE ] && [ $DECRYPT ]
+then
+    yellow_echo "INVISIBLE + DECRYPT"
+    invisible
+    decrypt
+elif [ $ENCRYPT ]
+then
+    yellow_echo "DEFAULT + ENCRYPT"
+    def_visible
+    encrypt
+elif [ $DECRYPT ]
+then
+    yellow_echo "DEFAULT + DECRYPT"
+    def_visible
+    decrypt
+else
+    yellow_echo "-"
+    echo "ERROR: something is missing"
+    exit 1
+fi
