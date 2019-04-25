@@ -1,17 +1,17 @@
 #!/bin/bash
 
 me() {
-    myip=$(/usr/bin/curl -s https://api.ipify.org)
-    mydata=$(/usr/bin/curl -s http://ipinfo.io/"${myip}")
+    MYIP=$(/usr/bin/curl -s https://api.ipify.org)
+    MYDATA=$(/usr/bin/curl -s http://ipinfo.io/"${MYIP}")
 
-    echo "IP: $(echo "${mydata}" | /usr/bin/jq -r '.ip')"
-    echo "hostname: $(echo "${mydata}" | /usr/bin/jq -r '.hostname')"
-    echo "city: $(echo "${mydata}" | /usr/bin/jq -r '.city')"
-    echo "region: $(echo "${mydata}" | /usr/bin/jq -r '.region')"
-    echo "country: $(echo "${mydata}" | /usr/bin/jq -r '.country')"
-    echo "location: $(echo "${mydata}" | /usr/bin/jq -r '.loc')"
-    echo "postal: $(echo "${mydata}" | /usr/bin/jq -r '.postal')"
-    echo "ISP: $(echo "${mydata}" | /usr/bin/jq -r '.org')"
+    echo "IP: $(echo "${MYDATA}" | /usr/bin/jq -r '.ip')"
+    echo "hostname: $(echo "${MYDATA}" | /usr/bin/jq -r '.hostname')"
+    echo "city: $(echo "${MYDATA}" | /usr/bin/jq -r '.city')"
+    echo "region: $(echo "${MYDATA}" | /usr/bin/jq -r '.region')"
+    echo "country: $(echo "${MYDATA}" | /usr/bin/jq -r '.country')"
+    echo "location: $(echo "${MYDATA}" | /usr/bin/jq -r '.loc')"
+    echo "postal: $(echo "${MYDATA}" | /usr/bin/jq -r '.postal')"
+    echo "ISP: $(echo "${MYDATA}" | /usr/bin/jq -r '.org')"
 }
 
 ip(){
@@ -21,20 +21,20 @@ ip(){
         echo "ERROR: IP is missing"
         exit 1
     else
-        remoteip=$1
+        REMOTEIP=$1
     fi
 
-    remotedata=$(/usr/bin/curl -s http://ipinfo.io/"${remoteip}")
+    REMOTEDATA=$(/usr/bin/curl -s http://ipinfo.io/"${REMOTEIP}")
 
 
-    echo "IP: $(echo "${remotedata}" | /usr/bin/jq -r '.ip')"
-    echo "hostname: $(echo "${remotedata}" | /usr/bin/jq -r '.hostname')"
-    echo "city: $(echo "${remotedata}" | /usr/bin/jq -r '.city')"
-    echo "region: $(echo "${remotedata}" | /usr/bin/jq -r '.region')"
-    echo "country: $(echo "${remotedata}" | /usr/bin/jq -r '.country')"
-    echo "location: $(echo "${remotedata}" | /usr/bin/jq -r '.loc')"
-    echo "postal: $(echo "${remotedata}" | /usr/bin/jq -r '.postal')"
-    echo "ISP: $(echo "${remotedata}" | /usr/bin/jq -r '.org')"
+    echo "IP: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.ip')"
+    echo "hostname: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.hostname')"
+    echo "city: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.city')"
+    echo "region: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.region')"
+    echo "country: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.country')"
+    echo "location: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.loc')"
+    echo "postal: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.postal')"
+    echo "ISP: $(echo "${REMOTEDATA}" | /usr/bin/jq -r '.org')"
 
 }
 
