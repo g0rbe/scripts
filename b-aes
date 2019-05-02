@@ -218,7 +218,7 @@ elif [ -z "$OUTPUT" ]
 then
     echo "ERROR: output missing!"
     exit 1
-elif [ "$(echo "$OUTPUT" | grep -e '-')" ]
+elif [[ "$OUTPUT" == *"-"* ]]
 then
     echo "ERROR: illegal output name: '$OUTPUT'"
     echo "output can't contain dash ('-')!"
